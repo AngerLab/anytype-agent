@@ -15,6 +15,7 @@ import {
   ChatResponse,
   ChatsResponse,
   type CreateChatBody,
+  type CreateObjectBody,
   type CreateTypeBody,
   type EditChatMessageBody,
   EmptyResponse,
@@ -31,6 +32,7 @@ import {
   type ToggleMessageReactionBody,
   TypeResponse,
   TypesResponse,
+  type UpdateObjectBody,
 } from "./schema";
 import {
   type ChatEvent,
@@ -262,6 +264,51 @@ export class AnytypeService {
     const res = await this.client.get(
       ObjectResponse,
       `/v1/spaces/${encodeURIComponent(spaceId)}/objects/${encodeURIComponent(objectId)}?format=${format}`,
+    );
+    return res.object;
+  }
+
+  // by default returns 100 objects
+  // TODO: add pagination support ?limit=100&offset=0 etc
+  async getObjects(spaceId: string): Promise<AnytypeObject[]> {
+    this.log.debug(`Fetching objects for space ${spaceId}...`);
+    const res = await this.client.get(
+      ObjectsResponse,
+      `/v1/spaces/${encodeURIComponent(spaceId)}/objects`,
+    );
+    return res.data;
+  }
+
+  async searchObjects(spaceId: string, payload: SearchRequest = {}): Promise<AnytypeObject[]> {
+    this.log.debug(`Searching objects in space ${spaceId} (query: "${payload.query || ""}")`);
+    const res = await this.client.post(
+      ObjectsResponse,
+      `/v1/spaces/${encodeURIComponent(spaceId)}/search`,
+      payload,
+    );
+    return res.data;
+  }
+
+  async createObject(spaceId: string, body: CreateObjectBody): Promise<ObjectWithBody> {
+    this.log.log(`Creating new object in space ${spaceId}...`);
+    const res = await this.client.post(
+      ObjectResponse,
+      `/v1/spaces/${encodeURIComponent(spaceId)}/objects`,
+      body,
+    );
+    return res.object;
+  }
+
+  async updateObject(
+    spaceId: string,
+    objectId: string,
+    body: UpdateObjectBody,
+  ): Promise<ObjectWithBody> {
+    this.log.log(`Updating object ${objectId} in space ${spaceId}...`);
+    const res = await this.client.patch(
+      ObjectResponse,
+      `/v1/spaces/${encodeURIComponent(spaceId)}/objects/${encodeURIComponent(objectId)}`,
+      body,
     );
     return res.object;
   }

@@ -387,6 +387,7 @@ export const AnytypeObject = Type.Object(
     layout: Type.Optional(Type.String()),
     space_id: Type.Optional(Type.String()),
     archived: Type.Optional(Type.Boolean()),
+    type_key: Type.Optional(Type.String()),
     object: Type.Optional(Type.String()),
   },
   { additionalProperties: true },
@@ -448,3 +449,30 @@ export const SearchRequest = Type.Object({
   sort: Type.Optional(Type.String()),
 });
 export type SearchRequest = Static<typeof SearchRequest>;
+
+export const CreateObjectBody = Type.Object(
+  {
+    type_key: Type.String({ minLength: 1 }), // "note", "task", "page", etc.
+    name: Type.Optional(Type.String()),
+    body: Type.Optional(Type.String()), // initial text/markdown
+    template_id: Type.Optional(Type.String()),
+    icon: Type.Optional(Icon),
+    properties: Type.Optional(Type.Array(ObjectProperty)),
+  },
+  { additionalProperties: true },
+);
+
+export type CreateObjectBody = Static<typeof CreateObjectBody>;
+
+export const UpdateObjectBody = Type.Object(
+  {
+    name: Type.Optional(Type.String()),
+    markdown: Type.Optional(Type.String()),
+    type_key: Type.Optional(Type.String()),
+    icon: Type.Optional(Icon),
+    properties: Type.Optional(Type.Array(ObjectProperty)),
+  },
+  { additionalProperties: true },
+);
+
+export type UpdateObjectBody = Static<typeof UpdateObjectBody>;

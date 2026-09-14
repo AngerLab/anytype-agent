@@ -1,0 +1,174 @@
+{
+  "object": {
+    "object": "object",
+    "id": "bafyreibedvvcguxy4hf7bgxl7yd3wfiz2efyew6m7doeyksed6wvxoqzye",
+    "name": "Test task",
+    "icon": {
+      "format": "emoji",
+      "emoji": "😄"
+    },
+    "archived": false,
+    "space_id": "bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7",
+    "snippet": "hello OlenaNotBot\nOlenaNotBot\nhi OlenaNotBot\nOlenaNotBot\nOlenaNotBot",
+    "layout": "basic",
+    "type": {
+      "object": "type",
+      "id": "bafyreieger4em7y6qgxowvrmwjizl326otlge7aprcake6ozxlhopfukpy",
+      "key": "task",
+      "name": "Task",
+      "plural_name": "Tasks",
+      "icon": {
+        "format": "icon",
+        "name": "extension-puzzle",
+        "color": "grey"
+      },
+      "archived": false,
+      "layout": "basic",
+      "properties": [
+        {
+          "object": "property",
+          "id": "bafyreigbew7bfzdtbkb4hlhyo2p4rpch4lflogf4gl7pnbtxvdf6cvwwfm",
+          "key": "status",
+          "name": "Status",
+          "format": "select"
+        },
+        {
+          "object": "property",
+          "id": "bafyreibxvppvzmqccvaczce65bfcpuygv2td2hsidcbjcrddmdov5dv7za",
+          "key": "due_date",
+          "name": "Due date",
+          "format": "date"
+        },
+        {
+          "object": "property",
+          "id": "bafyreicgyuzueqkip6ptltltpveowhsfkkf3h2k2vveufzwjlsal34hsnu",
+          "key": "tag",
+          "name": "Tag",
+          "format": "multi_select"
+        },
+        {
+          "object": "property",
+          "id": "bafyreiadq3psu47bo7nhcikp6ndijcuzcl6mzwdol3ncjbrha6rlyc2x7y",
+          "key": "backlinks",
+          "name": "Backlinks",
+          "format": "objects"
+        },
+        {
+          "object": "property",
+          "id": "bafyreidqkgzab2pr5qnnetl52sixdcokstntclj4yocdu4vhlir4v47hwi",
+          "key": "objective",
+          "name": "Objective",
+          "format": "objects"
+        },
+        {
+          "object": "property",
+          "id": "bafyreiejtjnqa62lf77slmq6g5457pvgbsz6pffgst55czdggmsx52uz4i",
+          "key": "created_date",
+          "name": "Creation date",
+          "format": "date"
+        },
+        {
+          "object": "property",
+          "id": "bafyreiheg2eh7xrjankf3abhgvjf4exute7olj5qiophb2nfauxlbyi6sq",
+          "key": "creator",
+          "name": "Created by",
+          "format": "objects"
+        },
+        {
+          "object": "property",
+          "id": "bafyreie4auqqmdopihbhfxff5dam3rervmpdl5cm2ct4iacdccurrqk3vq",
+          "key": "links",
+          "name": "Links",
+          "format": "objects"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "object": "property",
+        "id": "bafyreibxvppvzmqccvaczce65bfcpuygv2td2hsidcbjcrddmdov5dv7za",
+        "key": "due_date",
+        "name": "Due date",
+        "format": "date",
+        "date": "2026-08-18T22:00:00Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreie4auqqmdopihbhfxff5dam3rervmpdl5cm2ct4iacdccurrqk3vq",
+        "key": "links",
+        "name": "Links",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreig2wmud23eg6xx5fgaa75u5yk32xv5h27m4qonvy2x34mxteqf3sy",
+        "key": "last_opened_date",
+        "name": "Last opened date",
+        "format": "date",
+        "date": "2026-08-19T11:00:30Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreigyxgpw3ub7k7jgkhnf34c7v6gmxntcvpy3jlox3nsq3y52clrjua",
+        "key": "last_modified_date",
+        "name": "Last modified date",
+        "format": "date",
+        "date": "2026-08-30T16:44:43Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreifg4bi6wrkhjpiy3lj2kzcilosguigzsoymw5isszfjjgjifipfia",
+        "key": "last_modified_by",
+        "name": "Last modified by",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A8omdf8tkBmf5cS3jCCJBWVVpBfBnYb8h47jKyt2Ya1JNexn"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreiheg2eh7xrjankf3abhgvjf4exute7olj5qiophb2nfauxlbyi6sq",
+        "key": "creator",
+        "name": "Created by",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A9ypJDn31yhH5YACmMYxGfpF9TvZPVTmf3H3m1oG8kcUB4si"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreiadq3psu47bo7nhcikp6ndijcuzcl6mzwdol3ncjbrha6rlyc2x7y",
+        "key": "backlinks",
+        "name": "Backlinks",
+        "format": "objects",
+        "objects": ["bafyreialyfwg7hzgnvbn32wjfygkkgudiuv6hau7yra3kl6va3pra7ledy"]
+      },
+      {
+        "object": "property",
+        "id": "bafyreiejtjnqa62lf77slmq6g5457pvgbsz6pffgst55czdggmsx52uz4i",
+        "key": "created_date",
+        "name": "Creation date",
+        "format": "date",
+        "date": "2026-08-17T20:17:23Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreigbew7bfzdtbkb4hlhyo2p4rpch4lflogf4gl7pnbtxvdf6cvwwfm",
+        "key": "status",
+        "name": "Status",
+        "format": "select",
+        "select": {
+          "object": "tag",
+          "id": "bafyreiexvshftvs44hwrqnazpb7an7lx5ki6fcxtivrnipt4rlru3cqxam",
+          "key": "to_do",
+          "name": "To Do",
+          "color": "teal"
+        }
+      }
+    ],
+    "markdown": "hello [OlenaNotBot](anytype://object?objectId=_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c&spaceId=bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7)    \n   \n   \nOlenaNotBot   \n   \nhi [OlenaNotBot](anytype://object?objectId=_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c&spaceId=bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7)    \n   \n[OlenaNotBot](anytype://object?objectId=_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c&spaceId=bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7)    \n[OlenaNotBot](anytype://object?objectId=_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c&spaceId=bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7)    \n"
+  }
+}

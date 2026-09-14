@@ -177,6 +177,7 @@ export async function initSpaceOrchestrator(
   console.log(`🚀 [Orchestrator] Initializing ${validContexts.length} SpaceWorker(s)...`);
 
   const workers = validContexts.map((ctx) => new SpaceWorker(ctx, client));
+  console.log("HELOOO", workers);
   const streams = workers.map((w) => w.observe());
 
   return merge(...streams);

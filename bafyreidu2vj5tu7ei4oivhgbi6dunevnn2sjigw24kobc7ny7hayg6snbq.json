@@ -1,0 +1,144 @@
+{
+  "object": {
+    "object": "object",
+    "id": "bafyreidu2vj5tu7ei4oivhgbi6dunevnn2sjigw24kobc7ny7hayg6snbq",
+    "name": "hello world",
+    "icon": null,
+    "archived": false,
+    "space_id": "bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7",
+    "snippet": "Hello World!\ndzien dobry OlenaNotBot",
+    "layout": "basic",
+    "type": {
+      "object": "type",
+      "id": "bafyreidg7mbeekup55s6rdhapvt7s5x72p63bthz3hrgtgkpnhuhslbuym",
+      "key": "page",
+      "name": "Page",
+      "plural_name": "Pages",
+      "icon": {
+        "format": "icon",
+        "name": "document",
+        "color": "ice"
+      },
+      "archived": false,
+      "layout": "basic",
+      "properties": [
+        {
+          "object": "property",
+          "id": "bafyreiadq3psu47bo7nhcikp6ndijcuzcl6mzwdol3ncjbrha6rlyc2x7y",
+          "key": "backlinks",
+          "name": "Backlinks",
+          "format": "objects"
+        },
+        {
+          "object": "property",
+          "id": "bafyreicgyuzueqkip6ptltltpveowhsfkkf3h2k2vveufzwjlsal34hsnu",
+          "key": "tag",
+          "name": "Tag",
+          "format": "multi_select"
+        },
+        {
+          "object": "property",
+          "id": "bafyreiejtjnqa62lf77slmq6g5457pvgbsz6pffgst55czdggmsx52uz4i",
+          "key": "created_date",
+          "name": "Creation date",
+          "format": "date"
+        },
+        {
+          "object": "property",
+          "id": "bafyreiheg2eh7xrjankf3abhgvjf4exute7olj5qiophb2nfauxlbyi6sq",
+          "key": "creator",
+          "name": "Created by",
+          "format": "objects"
+        },
+        {
+          "object": "property",
+          "id": "bafyreie4auqqmdopihbhfxff5dam3rervmpdl5cm2ct4iacdccurrqk3vq",
+          "key": "links",
+          "name": "Links",
+          "format": "objects"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "object": "property",
+        "id": "bafyreiheg2eh7xrjankf3abhgvjf4exute7olj5qiophb2nfauxlbyi6sq",
+        "key": "creator",
+        "name": "Created by",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A92qdwp1XTEYeApR9RFZ1hVpNnUriTKC5KeEzQCbivhsxvPd"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreie4auqqmdopihbhfxff5dam3rervmpdl5cm2ct4iacdccurrqk3vq",
+        "key": "links",
+        "name": "Links",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreigyxgpw3ub7k7jgkhnf34c7v6gmxntcvpy3jlox3nsq3y52clrjua",
+        "key": "last_modified_date",
+        "name": "Last modified date",
+        "format": "date",
+        "date": "2026-08-30T16:47:00Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreig2wmud23eg6xx5fgaa75u5yk32xv5h27m4qonvy2x34mxteqf3sy",
+        "key": "last_opened_date",
+        "name": "Last opened date",
+        "format": "date",
+        "date": "2026-08-29T20:42:50Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreiadq3psu47bo7nhcikp6ndijcuzcl6mzwdol3ncjbrha6rlyc2x7y",
+        "key": "backlinks",
+        "name": "Backlinks",
+        "format": "objects",
+        "objects": null
+      },
+      {
+        "object": "property",
+        "id": "bafyreiejtjnqa62lf77slmq6g5457pvgbsz6pffgst55czdggmsx52uz4i",
+        "key": "created_date",
+        "name": "Creation date",
+        "format": "date",
+        "date": "2026-08-29T20:26:22Z"
+      },
+      {
+        "object": "property",
+        "id": "bafyreifg4bi6wrkhjpiy3lj2kzcilosguigzsoymw5isszfjjgjifipfia",
+        "key": "last_modified_by",
+        "name": "Last modified by",
+        "format": "objects",
+        "objects": [
+          "_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A8omdf8tkBmf5cS3jCCJBWVVpBfBnYb8h47jKyt2Ya1JNexn"
+        ]
+      },
+      {
+        "object": "property",
+        "id": "bafyreicgyuzueqkip6ptltltpveowhsfkkf3h2k2vveufzwjlsal34hsnu",
+        "key": "tag",
+        "name": "Tag",
+        "format": "multi_select",
+        "multi_select": [
+          {
+            "object": "tag",
+            "id": "bafyreie3t6z76q3psanbgaxyiodraafqfpegtngv5foijpgplvdrmlquue",
+            "key": "important",
+            "name": "important",
+            "color": "yellow"
+          }
+        ]
+      }
+    ],
+    "markdown": "Hello World!   \n   \ndzien dobry [OlenaNotBot](anytype://object?objectId=_participant_bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu_12orhxm981fr7_A7eruXe9x7QoWQzHes6brEL5nxjkxCcWbu9y2fAfVi9VTE2c&spaceId=bafyreiatodrzle2rm4qyj4556xykozuqy327valyvxmwhkxotfofhrsctu.12orhxm981fr7)    \n"
+  }
+}
