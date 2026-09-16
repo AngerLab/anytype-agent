@@ -1,26 +1,18 @@
-import { createHash } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   catchError,
-  concatMap,
-  connect,
   defer,
   EMPTY,
   exhaustMap,
   filter,
   finalize,
-  firstValueFrom,
   from,
-  ignoreElements,
-  type MonoTypeOperatorFunction,
   map,
-  merge,
   mergeMap,
   type Observable,
   of,
   retry,
-  scan,
   switchMap,
   takeUntil,
   tap,
@@ -32,13 +24,7 @@ import {
 import type { AppConfig } from "../app.config";
 import { AnytypeService, type ObjectWithBody } from "../client";
 import { LLM_SERVICE } from "../llm/llm.module";
-import {
-  AbstractLlmService,
-  LlmAction,
-  LlmEmptyResponseError,
-  type LlmEvent,
-  LlmResponse,
-} from "../llm/types";
+import { AbstractLlmService, LlmEmptyResponseError, LlmResponse } from "../llm/types";
 import { AbstractObserver, type ObserverFactory } from "./types";
 
 @Injectable()
@@ -54,7 +40,7 @@ export class ObjectObserverFactory implements ObserverFactory {
   }
 }
 
-const INITIAL_PROGRESS_TEXT = "⏳ Working...";
+const INITIAL_PROGRESS_TEXT = "> ⏳ Working...";
 const PROGRESS_POST_TIMEOUT_MS = 5_000;
 const PROGRESS_RETRY_DELAY_MS = 1_000;
 const SAFE_HTTP_TIMEOUT_MS = 15_000;
@@ -75,59 +61,97 @@ export class ObjectObserver extends AbstractObserver {
 
   run(): Observable<unknown> {
     // const pollIntervalMs = this.config.get("OBSERVER_SCAN_INTERVAL_MS");
-    const pollIntervalMs = 60 * 1000;
+    const pollIntervalMs = 30 * 1000;
+    this.logger.log(
+      `🚀 [${this.spaceId}] ObjectObserver started for bot "${this.botName}" (participantId: ${this.getBotParticipantId()})`,
+    );
 
     return timer(0, pollIntervalMs).pipe(
-      exhaustMap(() => from(this.scanForMentions())),
+      exhaustMap(() => this.scanForMentions()),
       takeUntil(this.destroy$),
     );
   }
 
-  private handleProgressMarker(markdown: string): string | null {
-    if (markdown.includes(INITIAL_PROGRESS_TEXT)) {
-      return null;
-    }
-    const lines = markdown.split("\n");
-    const mentionIndex = lines.findIndex((line) => this.getBotMention().test(line));
-    if (mentionIndex === -1) return null;
-
-    lines.splice(mentionIndex + 1, 0, "", INITIAL_PROGRESS_TEXT);
-
-    return lines.join("\n");
-  }
-
-  private getBotBacklinkIds(): Observable<string[]> {
-    return from(this.anytype.getObject(this.spaceId, this.getBotParticipantId())).pipe(
-      map((botMember) => {
-        const backlinksProp = botMember.properties?.find((p) => p.key === "backlinks");
-        console.log("backlinksProp", backlinksProp);
-        return backlinksProp?.objects ?? [];
-      }),
-    );
-  }
-
   private getObjectsWithMentions(): Observable<ObjectWithBody[]> {
-    return this.getBotBacklinkIds().pipe(
-      switchMap((linkIds) => {
-        return from(linkIds).pipe(
-          mergeMap((id) => this.anytype.getObject(this.spaceId, id, "md")),
-          toArray(),
-          map((objects) =>
-            objects.filter((obj) => obj?.markdown && this.getBotMention().test(obj.markdown)),
-          ),
+    this.logger.debug(
+      `[${this.spaceId}] Fetching bot participant object ${this.getBotParticipantId()}...`,
+    );
+
+    return this.request$(() =>
+      this.anytype.getObject(this.spaceId, this.getBotParticipantId()),
+    ).pipe(
+      switchMap((botMember) => {
+        const backlinksProp = botMember.properties?.find((p) => p.key === "backlinks");
+        const rawIds = (backlinksProp?.objects ?? []) as string[];
+        this.logger.log(
+          `[${this.spaceId}] Bot participant has ${rawIds.length} backlink(s): ${JSON.stringify(rawIds)}`,
         );
+
+        const backlinkObjectIds = [...new Set(rawIds)].filter(
+          (id) => !this.inFlightObjectIds.has(id),
+        );
+
+        if (backlinkObjectIds.length === 0) {
+          this.logger.debug(
+            `[${this.spaceId}] No pending objects to check (in-flight: ${this.inFlightObjectIds.size})`,
+          );
+          return of([]);
+        }
+
+        this.logger.log(
+          `[${this.spaceId}] Fetching bodies for ${backlinkObjectIds.length} candidate object(s)...`,
+        );
+
+        return from(backlinkObjectIds).pipe(
+          mergeMap((id) =>
+            this.request$(() => this.anytype.getObject(this.spaceId, id, "md")).pipe(
+              catchError((err) => {
+                this.logger.warn(
+                  `[${this.spaceId}] Failed to fetch backlink object ${id}: ${this.sanitizeErrorMessage(err)}`,
+                );
+                return EMPTY;
+              }),
+            ),
+          ),
+          toArray(),
+          map((objects) => {
+            const mentionRegex = this.getBotMention();
+            return objects.filter((obj) => {
+              const hasMarkdown = Boolean(obj?.markdown);
+              const matches = hasMarkdown && mentionRegex.test(obj.markdown!);
+              this.logger.log(
+                `[${this.spaceId}] Object ${obj.id} mention check: ${matches ? "MATCH" : "NO MATCH"} (regex: ${mentionRegex.source})`,
+              );
+              if (!matches && hasMarkdown) {
+                this.logger.debug(
+                  `[${this.spaceId}] Object ${obj.id} preview: ${obj.markdown?.slice(0, 100).replace(/\n/g, "\\n")}`,
+                );
+              }
+              return matches;
+            });
+          }),
+        );
+      }),
+      catchError((err) => {
+        this.logger.error(
+          `[${this.spaceId}] Error checking mentions: ${this.sanitizeErrorMessage(err)}`,
+        );
+        return of([]);
       }),
     );
   }
 
   private scanForMentions(): Observable<unknown> {
+    this.logger.debug(`🔎 [${this.spaceId}] Scanning for mentions...`);
+
     return this.getObjectsWithMentions().pipe(
       mergeMap((objects) => from(objects)),
-      filter((obj) => Boolean(obj.markdown) && !this.inFlightObjectIds.has(obj.id)),
       mergeMap((obj) =>
         this.handleObjectTrigger(obj).pipe(
           catchError((err) => {
-            this.logger.error(`Failed to process object ${obj.id}: ${err.message}`);
+            this.logger.error(
+              `[${this.spaceId}] Failed to process object ${obj.id}: ${this.sanitizeErrorMessage(err)}`,
+            );
             return EMPTY;
           }),
         ),
@@ -135,23 +159,29 @@ export class ObjectObserver extends AbstractObserver {
     );
   }
 
-  private updateObjectMarkdown(objectId: string, markdown: string): Observable<ObjectWithBody> {
-    return this.request$(() => this.anytype.updateObject(this.spaceId, objectId, { markdown }));
-  }
-
   private handleObjectTrigger(object: ObjectWithBody): Observable<unknown> {
-    const updatedMarkdown = this.handleProgressMarker(object?.markdown ?? "");
+    const rawMarkdown = object?.markdown ?? "";
+    this.logger.log(`⚡ [${this.spaceId}] Processing mention in object ${object.id}...`);
+
+    const updatedMarkdown = this.insertProgressMarker(rawMarkdown);
     if (!updatedMarkdown) {
+      this.logger.warn(
+        `[${this.spaceId}] Skipping object ${object.id}: progress marker already present or mention line not found`,
+      );
       return EMPTY;
     }
 
     this.inFlightObjectIds.add(object.id);
+    this.logger.log(`⏳ [${this.spaceId}] Posting progress marker to object ${object.id}...`);
 
     return this.updateObjectMarkdown(object.id, updatedMarkdown).pipe(
       switchMap(() => {
         const abortController = new AbortController();
+        this.logger.log(
+          `🤖 [${this.spaceId}] Progress marker posted. Triggering LLM run for object ${object.id}...`,
+        );
 
-        return this.processLlmRun(object.id, updatedMarkdown, abortController.signal).pipe(
+        return this.processLlmRun(object.id, rawMarkdown, abortController.signal).pipe(
           switchMap((rawAnswer) => this.applyLlmAnswer(object.id, rawAnswer)),
           catchError((err) => {
             if (!abortController.signal.aborted) abortController.abort();
@@ -175,10 +205,12 @@ export class ObjectObserver extends AbstractObserver {
     markdown: string,
     signal: AbortSignal,
   ): Observable<string> {
-    this.logger.log(`💬 Generating LLM response for object ${objectId}...`);
+    this.logger.log(`💬 [${this.spaceId}] Generating LLM response for object ${objectId}...`);
 
     return this.llm.run(this.spaceId, { markdown }, signal).pipe(
       filter((e): e is LlmResponse => e instanceof LlmResponse),
+      // If the stream completes without any LlmResponse, throw error immediately
+      throwIfEmpty(() => new LlmEmptyResponseError()),
       map((res) => {
         const text = res.text.trim();
         if (!text) throw new LlmEmptyResponseError();
@@ -188,44 +220,66 @@ export class ObjectObserver extends AbstractObserver {
   }
 
   private applyLlmAnswer(objectId: string, rawAnswer: string): Observable<unknown> {
-    // defer?
-    return defer(async () => {
-      const latestObject = await this.anytype.getObject(this.spaceId, objectId, "md");
-      if (!latestObject?.markdown) return;
+    this.logger.log(`📝 [${this.spaceId}] Applying LLM answer to object ${objectId}...`);
+    const formattedAnswer = [
+      `> 🤖 **${this.botName}**`,
+      ...rawAnswer.split("\n").map((line) => `> ${line}`),
+    ].join("\n");
 
-      const formattedAnswer = [
-        `> 🤖 **${this.botName}**`,
-        ...rawAnswer.split("\n").map((line) => `> ${line}`),
-      ].join("\n");
-
-      const updatedMarkdown = this.editProgressMarker(latestObject.markdown, formattedAnswer);
-
-      await this.anytype.updateObject(this.spaceId, objectId, { markdown: updatedMarkdown });
-    });
-  }
-
-  private editProgressMarker(markdown: string, targetText: string): string {
-    return markdown
-      .replace(INITIAL_PROGRESS_TEXT, targetText)
-      .replace(new RegExp(this.getBotMention().source, "g"), `**@${this.botName}**`);
+    return this.saveProgressResult(objectId, formattedAnswer);
   }
 
   private handleLlmError(objectId: string, err: unknown): Observable<unknown> {
     const errMsg = this.sanitizeErrorMessage(err);
-    this.logger.error(`❌ LLM run failed: ${errMsg}`);
+    this.logger.error(`❌ [${this.spaceId}] LLM run failed for object ${objectId}: ${errMsg}`);
 
     const errorText = `⚠️ ${errMsg}`;
 
-    return defer(async () => {
-      const latest = await this.anytype.getObject(this.spaceId, objectId, "md").catch(() => null);
-      if (!latest?.markdown) return;
+    return this.saveProgressResult(objectId, errorText).pipe(catchError(() => EMPTY));
+  }
 
-      const errorMarkdown = this.editProgressMarker(latest.markdown, errorText);
+  private insertProgressMarker(markdown: string): string | null {
+    if (markdown.includes(INITIAL_PROGRESS_TEXT)) return null;
 
-      await this.anytype
-        .updateObject(this.spaceId, objectId, { markdown: errorMarkdown })
-        .catch(() => null);
-    });
+    const lines = markdown.split("\n");
+    const mentionRegex = this.getBotMention();
+    const mentionIndex = lines.findIndex((line) => mentionRegex.test(line));
+    if (mentionIndex === -1) return null;
+
+    lines.splice(mentionIndex + 1, 0, "", INITIAL_PROGRESS_TEXT);
+
+    return lines.join("\n");
+  }
+
+  private saveProgressResult(objectId: string, targetText: string): Observable<unknown> {
+    this.logger.log(
+      `💾 [${this.spaceId}] Saving progress result and stripping mention links for object ${objectId}...`,
+    );
+
+    return this.request$(() => this.anytype.getObject(this.spaceId, objectId, "md")).pipe(
+      switchMap((latest) => {
+        if (!latest?.markdown) {
+          this.logger.warn(
+            `[${this.spaceId}] Object ${objectId} markdown is empty, skipping result save`,
+          );
+          return EMPTY;
+        }
+
+        const updatedMarkdown = latest.markdown
+          .replace(INITIAL_PROGRESS_TEXT, targetText)
+          .replace(new RegExp(this.getBotMention().source, "gi"), `**@${this.botName}**`);
+
+        return this.updateObjectMarkdown(objectId, updatedMarkdown);
+      }),
+      tap({
+        next: () =>
+          this.logger.log(`✅ [${this.spaceId}] Successfully updated object ${objectId}!`),
+      }),
+    );
+  }
+
+  private updateObjectMarkdown(objectId: string, markdown: string): Observable<ObjectWithBody> {
+    return this.request$(() => this.anytype.updateObject(this.spaceId, objectId, { markdown }));
   }
 
   private request$<T>(
@@ -244,7 +298,8 @@ export class ObjectObserver extends AbstractObserver {
   }
 
   private getBotParticipantId(): string {
-    return `_participant_${this.spaceId}_${this.botMemberId}`;
+    const normalizedSpaceId = this.spaceId.replaceAll(".", "_");
+    return `_participant_${normalizedSpaceId}_${this.botMemberId}`;
   }
 
   private escapeRegex(str: string): string {
@@ -254,10 +309,10 @@ export class ObjectObserver extends AbstractObserver {
   private getBotMention(): RegExp {
     // Matches [@BotName](anytype://...) or [BotName](anytype://...)
     return new RegExp(
-      `\\[(?:@)?${this.escapeRegex(
+      `\\[\\s*(?:@)?${this.escapeRegex(
         this.botName,
-      )}\\]\\(anytype:\\/\\/object\\?objectId=_participant_[^)]+\\)`,
-      "g",
+      )}\\s*\\]\\(anytype:\\/\\/object\\?objectId=_participant_[^)]+\\)`,
+      "i",
     );
   }
 
