@@ -1,9 +1,9 @@
 import "reflect-metadata";
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { ConfigService } from "@nestjs/config";
-import type { HostConfig } from "../../app.config";
 import type { AnytypeClient } from "../../client/anytype.client";
 import { AnytypeProxy } from "../../client/anytype.proxy";
+import { makeAppConfig } from "../../config/__tests__/fixtures";
+import type { AppConfig } from "../../config/config.schema";
 import { sleep, waitFor } from "../../observer/__tests__/helpers";
 import { HostModelService } from "../host.model";
 import { LlmAction, type LlmEvent, LlmResponse } from "../types";
@@ -19,7 +19,7 @@ type HostModelInternals = {
 describe("HostModelService.run (RxJS Composition & Guards)", () => {
   let proxy: AnytypeProxy;
   let model: HostModelService;
-  let mockConfig: ConfigService<HostConfig, true>;
+  let mockConfig: AppConfig;
   let fakeClient: AnytypeClient;
 
   let issuedAliases: string[] = [];
@@ -32,20 +32,18 @@ describe("HostModelService.run (RxJS Composition & Guards)", () => {
   beforeEach(async () => {
     issuedAliases = [];
 
-    mockConfig = {
-      get: mock((key: string) => {
-        const configMap: Record<string, unknown> = {
-          HOST_PROXY_PORT: 0, // 0 = dynamic OS free port
-          ANYTYPE_BOT_NAME: "TestBot",
-          ANYTYPE_API_URL: "http://127.0.0.1:31012",
-          HOST_CLI_BIN: "agy",
-          HOST_SSH_USER: "testuser",
-          HOST_SSH_HOST: "127.0.0.1",
-          HOST_SSH_KEY_PATH: "/dummy/id_rsa",
-        };
-        return configMap[key];
-      }),
-    } as unknown as ConfigService<HostConfig, true>;
+    mockConfig = makeAppConfig({
+      ANYTYPE: { BOT_NAME: "TestBot", API_URL: "http://127.0.0.1:31012" },
+      LLM: [
+        {
+          NAME: "test-cli",
+          MODE: "cli",
+          CLI: "agy",
+          SSH: "ssh://testuser@127.0.0.1:22",
+          SSH_KEY: "/dummy/id_rsa",
+        },
+      ],
+    });
 
     fakeClient = {
       requestRaw: mock(async () => new Response("{}")),

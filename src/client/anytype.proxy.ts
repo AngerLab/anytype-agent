@@ -1,6 +1,5 @@
 import { randomInt } from "node:crypto";
 import { Inject, Injectable, Logger, type OnModuleDestroy } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import {
   catchError,
   firstValueFrom,
@@ -12,7 +11,8 @@ import {
   switchMap,
   tap,
 } from "rxjs";
-import type { HostConfig } from "../app.config";
+import { APP_CONFIG } from "../config/config.module";
+import type { AppConfig } from "../config/config.schema";
 import type { AnytypeClient } from "./anytype.client";
 import { ANYTYPE_CLIENT } from "./client.constants";
 import { SPACE_ROUTES_DOC } from "./routes";
@@ -38,13 +38,13 @@ export class AnytypeProxy implements OnModuleDestroy {
   readonly traces$ = new Subject<ProxyTrace>();
 
   constructor(
-    private readonly config: ConfigService<HostConfig, true>,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(ANYTYPE_CLIENT) private readonly client: AnytypeClient,
   ) {}
 
   async start(): Promise<void> {
-    const port = this.config.get("HOST_PROXY_PORT");
-    const targetUrl = this.config.get("ANYTYPE_API_URL");
+    const port = this.config.PROXY_PORT;
+    const targetUrl = this.config.ANYTYPE.API_URL;
 
     try {
       this.server = Bun.serve({

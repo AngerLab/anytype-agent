@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { APP_CONFIG } from "../config/config.module";
 import { AnytypeClient } from "./anytype.client";
 import { AnytypeProxy } from "./anytype.proxy";
 import { AnytypeService } from "./anytype.service";
@@ -9,7 +9,7 @@ import { ANYTYPE_CLIENT } from "./client.constants";
   providers: [
     {
       provide: ANYTYPE_CLIENT,
-      inject: [ConfigService],
+      inject: [APP_CONFIG],
       useFactory: AnytypeClient.factory,
     },
     AnytypeService,

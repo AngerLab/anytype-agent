@@ -8,7 +8,8 @@
     "@nestjs/testing": "^11",
     "@types/bun": "latest",
     "husky": "^9.1.7",
-    "lint-staged": "^17.3.0"
+    "lint-staged": "^17.3.0",
+    "type-fest": "^5.10.0"
   },
   "scripts": {
     "start": "bun ./src/index.ts",
@@ -28,9 +29,9 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.2.1",
-    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.2.1",
     "eventsource-parser": "^4.1.0",
+    "flat": "^6.0.1",
     "nestjs-cls": "^6.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
