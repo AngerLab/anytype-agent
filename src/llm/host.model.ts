@@ -1,5 +1,4 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Injectable } from "@nestjs/common";
 import {
   catchError,
   defer,
@@ -14,8 +13,9 @@ import {
   share,
   takeUntil,
 } from "rxjs";
-import type { HostConfig } from "../app.config";
 import { AnytypeProxy } from "../client/anytype.proxy";
+import { APP_CONFIG } from "../config/config.module";
+import type { AppConfig, LlmCli } from "../config/config.schema";
 import { buildHostPrompt } from "./prompts/host";
 import {
   AbstractLlmService,
@@ -27,20 +27,22 @@ import {
 
 @Injectable()
 export class HostModelService extends AbstractLlmService {
-  private readonly cliBin: string;
+  private readonly llm: LlmCli;
 
   constructor(
-    private readonly config: ConfigService<HostConfig, true>,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly proxy: AnytypeProxy,
   ) {
     super();
-    this.cliBin = this.config.get("HOST_CLI_BIN");
+    const llmCli = this.config.LLM.find((c) => c.MODE === "cli");
+    if (!llmCli) throw new Error("No CLI LLM config found");
+    this.llm = llmCli;
   }
 
   async init(): Promise<void> {
-    this.logger.log(`🔍 Verifying host agent availability ("${this.cliBin}")...`);
-    await this.execRemote(`${this.cliBin} --help`, undefined, 15_000);
-    this.logger.log(`✅ Host agent "${this.cliBin}" verified successfully`);
+    this.logger.log(`🔍 Verifying host agent availability ("${this.llm.CLI}")...`);
+    await this.execRemote(`${this.llm.CLI} --help`, undefined, 15_000);
+    this.logger.log(`✅ Host agent "${this.llm.CLI}" verified successfully`);
 
     await this.proxy.start();
     this.logger.log(`✅ Proxy started`);
@@ -76,8 +78,8 @@ export class HostModelService extends AbstractLlmService {
 
       const prompt = buildHostPrompt(
         event,
-        this.config.get("ANYTYPE_BOT_NAME"),
-        `http://127.0.0.1:${this.config.get("HOST_PROXY_PORT")}`,
+        this.config.ANYTYPE.BOT_NAME,
+        `http://127.0.0.1:${this.config.PROXY_PORT}`,
         this.proxy.routesDoc,
         spaceAlias,
       );
@@ -90,7 +92,7 @@ export class HostModelService extends AbstractLlmService {
       // Flags: --dangerously-skip-permissions (headless tool invocation without TTY),
       // --disable-slash-commands (slash command parser won't consume /v1/spaces URL);
       // $(cat) — prompt from STDIN without base64 or shell escaping.
-      const remoteCommand = `export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"; ${this.cliBin} -p "$(cat)" --dangerously-skip-permissions --disable-slash-commands`;
+      const remoteCommand = `export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"; ${this.llm.CLI} -p "$(cat)" --dangerously-skip-permissions --disable-slash-commands`;
 
       const { stdout, stderr } = await this.execRemote(remoteCommand, prompt, 120_000, abort);
 
@@ -108,12 +110,17 @@ export class HostModelService extends AbstractLlmService {
   }
 
   protected buildSshArgs(remoteCommand: string): string[] {
-    const sshCreds = `${this.config.get("HOST_SSH_USER")}@${this.config.get("HOST_SSH_HOST")}`;
+    const sshUrl = this.llm.SSH;
+    const sshKeyPath = this.llm.SSH_KEY;
+
+    if (!sshUrl) throw new Error("SSH URL not configured");
+    if (!sshKeyPath) throw new Error("SSH key path not configured");
+
     return [
       "ssh",
       "-T",
       "-i",
-      this.config.get("HOST_SSH_KEY_PATH"),
+      sshKeyPath,
       "-o",
       "StrictHostKeyChecking=no",
       "-o",
@@ -122,7 +129,7 @@ export class HostModelService extends AbstractLlmService {
       "ConnectTimeout=5",
       "-o",
       "LogLevel=ERROR",
-      sshCreds,
+      sshUrl,
       remoteCommand,
     ];
   }

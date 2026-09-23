@@ -1,10 +1,9 @@
 import "reflect-metadata";
 import { describe, expect, it, mock } from "bun:test";
-import { type ConfigService } from "@nestjs/config";
 import { defer, Observable, of, Subject } from "rxjs";
-import type { AppConfig } from "../../app.config";
-import type { AnytypeService, Chat } from "../../client";
-import type { ChatEvent, ChatMessage } from "../../client/types";
+import type { AnytypeService, Chat, ChatMessage } from "../../client";
+import type { ChatEvent } from "../../client/types";
+import { makeAppConfig } from "../../config/__tests__/fixtures";
 import { type AbstractLlmService, LlmAction, type LlmEvent, LlmResponse } from "../../llm/types";
 import { ChatsObserver, ChatsObserverFactory } from "../chats.observer";
 import { callArg, callCount, makeMessage, sleep, waitFor } from "./helpers";
@@ -68,14 +67,13 @@ describe("ChatsObserver (Unit Tests)", () => {
       run: mock(options.llmHandler ?? (() => of(LlmResponse.create("  Bot reply  ")))),
     } as unknown as AbstractLlmService;
 
-    const configMock = {
-      get: (key: string) => {
-        if (key === "OBSERVER_SCAN_INTERVAL_MS") return options.scanIntervalMs ?? 60_000;
-        if (key === "OBSERVER_RETRY_DELAY_MS") return 10;
-        if (key === "OBSERVER_DEBOUNCE_MS") return 10;
-        return undefined;
+    const configMock = makeAppConfig({
+      SETTINGS: {
+        SCAN_INTERVAL_MS: options.scanIntervalMs ?? 60_000,
+        RETRY_DELAY_MS: 10,
+        DEBOUNCE_MS: 10,
       },
-    } as unknown as ConfigService<AppConfig, true>;
+    });
 
     const observer = new ChatsObserver(
       "space.1",
@@ -302,7 +300,7 @@ describe("ChatsObserver (Unit Tests)", () => {
     const factory = new ChatsObserverFactory(
       {} as AnytypeService,
       {} as AbstractLlmService,
-      {} as ConfigService<AppConfig, true>,
+      makeAppConfig(),
     );
 
     const observer = factory.create("space.1", "TestBot", "member.1");

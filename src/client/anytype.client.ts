@@ -1,11 +1,10 @@
 import { Logger } from "@nestjs/common";
-import type { ConfigService } from "@nestjs/config";
 import { EventSourceParserStream } from "eventsource-parser/stream";
 import { defer, firstValueFrom, from, type Observable, timer } from "rxjs";
 import { finalize, map, retry, switchMap, tap } from "rxjs/operators";
 import type { Static, TSchema } from "typebox";
 import Value from "typebox/value";
-import type { AppConfig } from "../app.config";
+import type { AppConfig } from "../config/config.schema";
 
 /**
  * Transport layer for Anytype daemon: HTTP, headers, authentication, SSE streaming.
@@ -218,10 +217,10 @@ export class AnytypeClient {
     }
   }
 
-  static async factory(config: ConfigService<AppConfig, true>) {
+  static async factory(config: AppConfig) {
     const log = new Logger("AnytypeClient");
-    const apiUrl = config.get("ANYTYPE_API_URL");
-    const apiKey = config.get("ANYTYPE_API_KEY");
+    const apiUrl = config.ANYTYPE.API_URL;
+    const apiKey = config.ANYTYPE.API_KEY;
 
     log.log(`Initializing Anytype client for ${apiUrl}...`);
     const client = new AnytypeClient(log, apiUrl.replace(/\/$/, ""), apiKey);

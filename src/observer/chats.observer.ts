@@ -1,5 +1,4 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import {
   catchError,
   concatMap,
@@ -28,9 +27,10 @@ import {
   timeout,
   timer,
 } from "rxjs";
-import type { AppConfig } from "../app.config";
 import { AnytypeService } from "../client/anytype.service";
 import type { ChatMessageAdded } from "../client/types";
+import { APP_CONFIG } from "../config/config.module";
+import type { AppConfig } from "../config/config.schema";
 import { LLM_SERVICE } from "../llm/llm.module";
 import {
   type AbstractLlmService,
@@ -46,7 +46,7 @@ export class ChatsObserverFactory implements ObserverFactory {
   constructor(
     private readonly anytype: AnytypeService,
     @Inject(LLM_SERVICE) private readonly llm: AbstractLlmService,
-    private readonly config: ConfigService<AppConfig, true>,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   create(spaceId: string, _botName: string, botMemberId: string): ChatsObserver {
@@ -71,13 +71,13 @@ export class ChatsObserver extends AbstractObserver {
     private readonly botMemberId: string,
     private readonly anytype: AnytypeService,
     private readonly llm: AbstractLlmService,
-    private readonly config: ConfigService<AppConfig, true>,
+    private readonly config: AppConfig,
   ) {
     super();
   }
 
   run(): Observable<unknown> {
-    const scanIntervalMs = this.config.get("OBSERVER_SCAN_INTERVAL_MS");
+    const scanIntervalMs = this.config.SETTINGS.SCAN_INTERVAL_MS;
 
     const activeChatIds$ = timer(0, scanIntervalMs).pipe(
       exhaustMap(() => this.anytype.getChats(this.spaceId)),
@@ -102,7 +102,7 @@ export class ChatsObserver extends AbstractObserver {
                 `Failed in chat ${chatId}: ${this.sanitizeErrorMessage(err)}`,
                 err?.stack,
               );
-              return timer(this.config.get("OBSERVER_RETRY_DELAY_MS"));
+              return timer(this.config.SETTINGS.RETRY_DELAY_MS);
             },
           }),
           takeUntil(activeChatIds$.pipe(filter((activeIds) => !activeIds.has(chatId)))),
@@ -113,10 +113,8 @@ export class ChatsObserver extends AbstractObserver {
   }
 
   private subscribeToChat(chatId: string): Observable<unknown> {
-    const debounceMs = this.config.get("OBSERVER_DEBOUNCE_MS");
-
     const intent$ = this.anytype.subscribeChatMessages(this.spaceId, chatId).pipe(
-      retry({ delay: this.config.get("OBSERVER_RETRY_DELAY_MS") }),
+      retry({ delay: this.config.SETTINGS.RETRY_DELAY_MS }),
       filter((msg) => msg !== null && msg.type === "message_added"),
       concatMap((msg) => this.classifyMessage(chatId, msg)),
       scan((pending: ChatMessageAdded | null, intent: ChatIntent): ChatMessageAdded | null => {
@@ -129,7 +127,7 @@ export class ChatsObserver extends AbstractObserver {
         return pending;
       }, null),
       distinctUntilChanged((a, b) => a?.id === b?.id),
-      debounceTime(debounceMs),
+      debounceTime(this.config.SETTINGS.DEBOUNCE_MS),
       filter((msg): msg is ChatMessageAdded => msg !== null),
     );
 
