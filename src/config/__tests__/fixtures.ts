@@ -48,13 +48,13 @@ export function makeAppConfig(overrides: AppConfigOverrides = {}): AppConfig {
  */
 export function makeAppEnv(overrides: Record<string, string> = {}): Record<string, string> {
   return {
-    "ANYTYPE.API_URL": "http://127.0.0.1:31012",
-    "ANYTYPE.API_KEY": "test_api_key",
-    "ANYTYPE.BOT_NAME": "TestBot",
-    "LLM.0.MODE": "cli",
-    "LLM.0.CLI": "claude",
-    "LLM.0.SSH": "ssh://testuser@host.docker.internal:22",
-    "LLM.0.SSH_KEY": "/keys/id_ed25519",
+    ANYTYPE__API_URL: "http://127.0.0.1:31012",
+    ANYTYPE__API_KEY: "test_api_key",
+    ANYTYPE__BOT_NAME: "TestBot",
+    LLM__0__MODE: "cli",
+    LLM__0__CLI: "claude",
+    LLM__0__SSH: "ssh://testuser@host.docker.internal:22",
+    LLM__0__SSH_KEY: "/keys/id_ed25519",
     // 0 = OS-assigned free port, avoids collisions when bootstrapping in tests.
     PROXY_PORT: "0",
     ...overrides,

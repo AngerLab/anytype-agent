@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { of } from "rxjs";
 import { makeAppConfig } from "../../config/__tests__/fixtures";
 import { APP_CONFIG, ConfigModule } from "../../config/config.module";
-import { HostModelService } from "../../llm/host.model";
+import { LlmService } from "../../llm/llm.service";
 import { LlmResponse } from "../../llm/types";
 import { ObserverModule } from "../observer.module";
 import { ObserverService } from "../observer.service";
@@ -24,7 +24,6 @@ describe("ObserverModule (Integration Tests via Nest Test)", () => {
   let observerService: ObserverService;
   let internals: ObserverServiceInternals;
 
-  let initSpy: ReturnType<typeof spyOn>;
   let runSpy: ReturnType<typeof spyOn>;
   let fetchSpy: ReturnType<typeof spyOn>;
 
@@ -49,8 +48,7 @@ describe("ObserverModule (Integration Tests via Nest Test)", () => {
 
   beforeAll(async () => {
     // Mock LLM calls prior to compile() to avoid triggering real SSH/CLI
-    initSpy = spyOn(HostModelService.prototype, "init").mockResolvedValue();
-    runSpy = spyOn(HostModelService.prototype, "run").mockImplementation(() =>
+    runSpy = spyOn(LlmService.prototype, "run").mockImplementation(() =>
       of(LlmResponse.create("  Bot reply  ")),
     );
 
@@ -169,7 +167,6 @@ describe("ObserverModule (Integration Tests via Nest Test)", () => {
   afterAll(async () => {
     await testingModule?.close();
     fetchSpy?.mockRestore();
-    initSpy?.mockRestore();
     runSpy?.mockRestore();
     process.env = originalEnv;
   });

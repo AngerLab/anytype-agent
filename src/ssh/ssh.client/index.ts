@@ -14,6 +14,8 @@ export interface ExecOptions {
   signal?: AbortSignal;
 }
 
+// TODO add global interface of SpawnedProcess
+// {stdout$, stderr$, exit, kill}
 export abstract class SshProcess {
   protected readonly logger = new Logger(this.constructor.name);
 
@@ -35,6 +37,7 @@ export class ExecTimeoutError extends Error {
   }
 }
 
+// TODO add global interface of ProcessSpawner
 export abstract class SshClient {
   forwardPort?: { localPort: number; remotePort: number };
 

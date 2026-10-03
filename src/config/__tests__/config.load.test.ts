@@ -2,11 +2,11 @@ import { describe, expect, it } from "bun:test";
 import { loadFromEnv } from "../config.load";
 
 const minimal = {
-  "ANYTYPE.API_URL": "http://127.0.0.1:31012",
-  "ANYTYPE.BOT_NAME": "DevBot",
-  "ANYTYPE.API_KEY": "secret_token",
-  "LLM.0.MODE": "cli",
-  "LLM.0.CLI": "claude",
+  ANYTYPE__API_URL: "http://127.0.0.1:31012",
+  ANYTYPE__BOT_NAME: "DevBot",
+  ANYTYPE__API_KEY: "secret_token",
+  LLM__0__MODE: "cli",
+  LLM__0__CLI: "claude",
 };
 
 describe("loadFromEnv (dotted env -> AppConfig)", () => {
@@ -35,18 +35,18 @@ describe("loadFromEnv (dotted env -> AppConfig)", () => {
   });
 
   it("coerces string env values to numbers", () => {
-    const config = loadFromEnv({ ...minimal, "SETTINGS.DEBOUNCE_MS": "1234" });
+    const config = loadFromEnv({ ...minimal, SETTINGS__DEBOUNCE_MS: "1234" });
     expect(config.SETTINGS.DEBOUNCE_MS).toBe(1234);
   });
 
   it("supports multiple indexed providers", () => {
     const config = loadFromEnv({
       ...minimal,
-      "LLM.0.CLI": "agy",
-      "LLM.1.MODE": "api",
-      "LLM.1.API_URL": "https://api.openai.com/v1",
-      "LLM.1.API_KEY": "sk-test",
-      "LLM.1.MODEL": "gpt-4o",
+      LLM__0__CLI: "agy",
+      LLM__1__MODE: "api",
+      LLM__1__API_URL: "https://api.openai.com/v1",
+      LLM__1__API_KEY: "sk-test",
+      LLM__1__MODEL: "gpt-4o",
     });
 
     expect(config.LLM).toHaveLength(2);
@@ -57,13 +57,13 @@ describe("loadFromEnv (dotted env -> AppConfig)", () => {
 
   it("wraps a lone provider written without an index into an array", () => {
     const config = loadFromEnv({
-      "ANYTYPE.API_URL": "http://127.0.0.1:31012",
-      "ANYTYPE.BOT_NAME": "DevBot",
-      "ANYTYPE.API_KEY": "secret_token",
-      "LLM.MODE": "api",
-      "LLM.API_URL": "https://api.openai.com/v1",
-      "LLM.API_KEY": "sk-test",
-      "LLM.MODEL": "gpt-4o",
+      ANYTYPE__API_URL: "http://127.0.0.1:31012",
+      ANYTYPE__BOT_NAME: "DevBot",
+      ANYTYPE__API_KEY: "secret_token",
+      LLM__MODE: "api",
+      LLM__API_URL: "https://api.openai.com/v1",
+      LLM__API_KEY: "sk-test",
+      LLM__MODEL: "gpt-4o",
     });
 
     expect(config.LLM).toEqual([

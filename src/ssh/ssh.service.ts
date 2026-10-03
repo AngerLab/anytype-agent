@@ -17,7 +17,7 @@ export class SshService implements OnModuleDestroy {
     @Inject(SSH_CLIENT_FACTORY) private factory: SshFactory,
   ) {}
 
-  public async connect(uri: string, keyPath: string, { localPort }: SshOptions = {}) {
+  public async connect(uri: string, keyPath: string = "", { localPort }: SshOptions = {}) {
     const { host, port, username } = this.parseSshUri(uri);
     const key = `${host}:${port}:${username}:${keyPath}:${localPort ?? "none"}`;
 
@@ -56,7 +56,8 @@ export class SshService implements OnModuleDestroy {
     throw new Error("Invalid SSH URI");
   }
 
-  protected loadPrivateKey(keyPath: string): Promise<string> {
+  protected loadPrivateKey(keyPath: string): Promise<string | undefined> {
+    if (!keyPath) return Promise.resolve(undefined);
     return fs.readFile(keyPath, "utf8");
   }
 

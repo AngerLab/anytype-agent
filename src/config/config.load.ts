@@ -6,16 +6,18 @@ import Value from "typebox/value";
 import { AppConfig, type AppConfigRaw } from "./config.schema";
 
 /**
- * Builds AppConfig from dotted environment variables ("ANYTYPE.API_URL", "LLM.0.NAME"),
- * applying schema defaults and TypeBox corrective coercion (e.g. "800" -> 800).
+ * Builds AppConfig from nested environment variables using `__` as the path separator
+ * ("ANYTYPE__API_URL", "LLM__0__NAME"): POSIX env names cannot contain dots, so a dotted
+ * key never reaches a container. Applies schema defaults and TypeBox corrective coercion
+ * (e.g. "800" -> 800).
  *
  * Fails fast with a readable field list instead of TypeBox's opaque `ParseError`
  * (whose message is just "Parse" and hides the failing paths in `cause.errors`).
  */
 export const loadFromEnv = (env: NodeJS.ProcessEnv = process.env): AppConfig => {
-  const raw = unflatten<NodeJS.ProcessEnv, AppConfigRaw>(env);
+  const raw = unflatten<NodeJS.ProcessEnv, AppConfigRaw>(env, { delimiter: "__" });
 
-  // A lone provider may be written without an index ("LLM.MODE"), which unflattens to an
+  // A lone provider may be written without an index ("LLM__MODE"), which unflattens to an
   // object rather than a one-element array.
   if (isObject(raw.LLM) && !isArray(raw.LLM)) raw.LLM = [raw.LLM];
 

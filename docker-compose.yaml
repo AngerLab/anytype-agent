@@ -15,41 +15,17 @@ services:
       context: .
       target: dev
     environment:
-      - ANYTYPE_API_URL=${ANYTYPE_API_URL}
-      - ANYTYPE_BOT_NAME=${ANYTYPE_BOT_NAME}
-      - ANYTYPE_API_KEY=${ANYTYPE_API_KEY}
+      - ANYTYPE__API_URL=http://anytype-cli:31012
+      - ANYTYPE__BOT_NAME=${ANYTYPE_BOT_NAME}
+      - ANYTYPE__API_KEY=${ANYTYPE_API_KEY}
 
-      # Host SSH + AGY
-      # LLM_MODE=host requires HOST_SSH_USER, HOST_SSH_KEY_PATH, HOST_CLI_BIN
-      - LLM_MODE=host
-      - HOST_SSH_USER=${HOST_SSH_USER}
-      - HOST_SSH_KEY_PATH=${HOST_SSH_KEY_PATH}
-      - HOST_CLI_BIN=${HOST_CLI_BIN}
-      # - HOST_SSH_HOST=host.docker.internal
-      #
-      #
-      - ANYTYPE.API_URL=${ANYTYPE_API_URL}
-      - ANYTYPE.BOT_NAME=${ANYTYPE_BOT_NAME}
-      - ANYTYPE.API_KEY=${ANYTYPE_API_KEY}
-
-      # Placeholder
-      # - SETTINGS.DEBOUNCE_MS=800
-      # - SETTINGS.RETRY_DELAY_MS=3000
-      # - SETTINGS.SCAN_INTERVAL_MS=60000
-      # - SETTINGS.MAX_ACTIVE_CHATS=50
-
-      - LLM.0.NAME=agy-local
-      - LLM.0.MODE=cli
-      - LLM.0.CLI=agy
-      - LLM.0.SSH=ssh://${HOST_SSH_USER}@host.docker.internal:22
-      - LLM.0.SSH_KEY=/keys/id_ed25519
+      - LLM__NAME=agy-local
+      - LLM__MODE=cli
+      - LLM__CLI=/Users/hatgor/.local/bin/agy
+      - LLM__SSH=ssh://${HOST_SSH_USER}@host.docker.internal:22
+      - LLM__SSH_KEY=/keys/id_ed25519
     volumes:
       - ./src:/app/src
       - ~/.ssh/id_ed25519:/keys/id_ed25519:ro
     depends_on:
       - anytype-cli
-    ports:
-      # Expose only to host loopback: proxy authenticates via a 6-digit alias,
-      # and must not be exposed to the LAN.
-      # Must match the app's PROXY_PORT default (see src/config/config.schema.ts).
-      - "127.0.0.1:31013:31013"

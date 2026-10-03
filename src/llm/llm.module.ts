@@ -1,34 +1,47 @@
 import { Module } from "@nestjs/common";
 import { ClientModule } from "../client";
-import { HostModelService } from "./host.model";
-import { AbstractLlmService } from "./types";
-
-export const LLM_SERVICE = Symbol.for("LLM_SERVICE");
+import { AnytypeProxy } from "../client/anytype.proxy";
+import { APP_CONFIG } from "../config/config.module";
+import type { AppConfig } from "../config/config.schema";
+import type { SshClient } from "../ssh/ssh.client";
+import { SshModule } from "../ssh/ssh.module";
+import { SshService } from "../ssh/ssh.service";
+import { AgyCliProvider } from "./cli/agy";
+import { LLM_PROVIDERS } from "./llm.constants";
+import { LlmService } from "./llm.service";
 
 @Module({
-  imports: [ClientModule],
+  imports: [ClientModule, SshModule],
   providers: [
-    HostModelService,
-    // ApiModelService,
     {
-      provide: LLM_SERVICE,
-      inject: [
-        HostModelService,
-        // ApiModelService
-      ],
-      useFactory: async (
-        hostModel: HostModelService,
-        // apiModel: ApiModelService,
-      ): Promise<AbstractLlmService> => {
-        // TODO: pick providers from config.LLM (cli/api) and wrap them in a fallback chain.
-        const service: AbstractLlmService = hostModel;
+      provide: LLM_PROVIDERS,
+      inject: [APP_CONFIG, SshService, AnytypeProxy],
+      useFactory: (config: AppConfig, ssh: SshService, proxy: AnytypeProxy) => {
+        return Promise.allSettled(
+          config.LLM.map(async (provider) => {
+            if (provider.MODE === "cli") {
+              await proxy.start();
 
-        // init() inside DI factory: invalid config/SSH fails immediately during module bootstrap
-        await service.init();
-        return service;
+              // TODO: add a local process spawner here later
+              let spawner: SshClient | any;
+
+              if (provider.SSH) {
+                spawner = await ssh.connect(provider.SSH, provider.SSH_KEY, {
+                  localPort: proxy.port,
+                });
+              }
+
+              if (provider.CLI.endsWith("agy")) {
+                return new AgyCliProvider(spawner, provider.CLI);
+              }
+            }
+          }),
+          // TODO: add a logger here to track the results
+        ).then((results) => results.filter((r) => r.status === "fulfilled").map((r) => r.value));
       },
     },
+    LlmService,
   ],
-  exports: [LLM_SERVICE],
+  exports: [LlmService],
 })
 export class LlmModule {}

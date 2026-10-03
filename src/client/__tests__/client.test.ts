@@ -297,7 +297,7 @@ describe("Anytype Client & Service Layer (Separation of Concerns)", () => {
     it("bootstraps ClientModule, performs healthcheck in useFactory, and provides ANYTYPE_CLIENT & AnytypeService", async () => {
       Object.assign(
         process.env,
-        makeAppEnv({ "ANYTYPE.BOT_NAME": "Bot", "ANYTYPE.API_KEY": "token123" }),
+        makeAppEnv({ ANYTYPE__BOT_NAME: "Bot", ANYTYPE__API_KEY: "token123" }),
       );
 
       fetchSpy.mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));

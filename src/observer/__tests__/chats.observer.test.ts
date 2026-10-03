@@ -4,7 +4,8 @@ import { defer, Observable, of, Subject } from "rxjs";
 import type { AnytypeService, Chat, ChatMessage } from "../../client";
 import type { ChatEvent } from "../../client/types";
 import { makeAppConfig } from "../../config/__tests__/fixtures";
-import { type AbstractLlmService, LlmAction, type LlmEvent, LlmResponse } from "../../llm/types";
+import type { LlmService } from "../../llm/llm.service";
+import { LlmAction, type LlmEvent, LlmResponse, type LlmRunContext } from "../../llm/types";
 import { ChatsObserver, ChatsObserverFactory } from "../chats.observer";
 import { callArg, callCount, makeMessage, sleep, waitFor } from "./helpers";
 
@@ -14,7 +15,7 @@ describe("ChatsObserver (Unit Tests)", () => {
       getChats?: () => Promise<Chat[]>;
       getChatMessages?: (spaceId: string, chatId: string) => Promise<ChatMessage[]>;
       getChatMessage?: (spaceId: string, chatId: string, messageId: string) => Promise<ChatMessage>;
-      llmHandler?: (spaceId: string, payload: object, abort: AbortSignal) => Observable<LlmEvent>;
+      llmHandler?: (ctx: LlmRunContext, history: ChatMessage[]) => Observable<LlmEvent>;
       scanIntervalMs?: number;
       editChatMessage?: (
         spaceId: string,
@@ -63,9 +64,8 @@ describe("ChatsObserver (Unit Tests)", () => {
     } as unknown as AnytypeService;
 
     const llmFake = {
-      init: mock(async () => {}),
       run: mock(options.llmHandler ?? (() => of(LlmResponse.create("  Bot reply  ")))),
-    } as unknown as AbstractLlmService;
+    } as unknown as LlmService;
 
     const configMock = makeAppConfig({
       SETTINGS: {
@@ -228,9 +228,9 @@ describe("ChatsObserver (Unit Tests)", () => {
     let abortSignal2: AbortSignal | undefined;
 
     const { ready, pushEvent, llmFake } = setup({
-      llmHandler: (_spaceId, _payload, abort) => {
+      llmHandler: (ctx) => {
         if (!abortSignal1) {
-          abortSignal1 = abort;
+          abortSignal1 = ctx.abort;
           return new Observable<LlmEvent>((subscriber) => {
             const timer = setTimeout(() => {
               subscriber.next(LlmResponse.create("First reply"));
@@ -239,7 +239,7 @@ describe("ChatsObserver (Unit Tests)", () => {
             return () => clearTimeout(timer);
           });
         }
-        abortSignal2 = abort;
+        abortSignal2 = ctx.abort;
         return of(LlmResponse.create("Second reply"));
       },
     });
@@ -299,7 +299,7 @@ describe("ChatsObserver (Unit Tests)", () => {
   it("8. ChatsObserverFactory: creates instance implementing ObserverFactory", () => {
     const factory = new ChatsObserverFactory(
       {} as AnytypeService,
-      {} as AbstractLlmService,
+      {} as unknown as LlmService,
       makeAppConfig(),
     );
 
@@ -361,8 +361,8 @@ describe("ChatsObserver (Unit Tests)", () => {
     await waitFor(() => callCount(llmFake.run) === 1);
 
     expect(callCount(llmFake.run)).toBe(1);
-    const payloadArg = callArg<{ msg: { id: string } }>(llmFake.run, 0, 1);
-    expect(payloadArg.msg.id).toBe("burst_2");
+    const ctxArg = callArg<LlmRunContext>(llmFake.run, 0, 0);
+    expect(ctxArg.triggerId).toBe("burst_2");
   });
 
   it("11. Positive Backfill: unanswered mention in replay burst triggers LLM after debounce window", async () => {
@@ -416,8 +416,8 @@ describe("ChatsObserver (Unit Tests)", () => {
     await waitFor(() => callCount(llmFake.run) === 1);
 
     expect(callCount(llmFake.run)).toBe(1);
-    const payloadArg = callArg<{ msg: { id: string } }>(llmFake.run, 0, 1);
-    expect(payloadArg.msg.id).toBe("hist_unanswered");
+    const ctxArg = callArg<LlmRunContext>(llmFake.run, 0, 0);
+    expect(ctxArg.triggerId).toBe("hist_unanswered");
 
     // Check that reply_to_message_id links back to the unanswered question
     const progressPost = callArg<{ text: string; reply_to_message_id?: string }>(
